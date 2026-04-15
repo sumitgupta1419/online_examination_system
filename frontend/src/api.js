@@ -20,6 +20,40 @@ export const api = {
     return response.json();
   },
 
+  analyzeFrame: async (image) => {
+  const response = await fetch("http://localhost:8000/exam/analyze-frame", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ image }),
+  });
+  return response.json();
+},
+
+analyzeFrame: async (studentId, image) => {
+  const response = await fetch("http://localhost:8000/exam/analyze-frame", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ student_id: studentId, image }),
+  });
+  return response.json();
+},
+
+getCheatingScore: async (studentId) => {
+  const response = await fetch(`http://localhost:8000/exam/cheating-score/${studentId}`);
+  return response.json();
+},
+
+
+
+
+
+
+
+
   addStudent: async (studentId, name, password) => {
     const response = await fetch(`${API_BASE_URL}/admin/add-student`, {
       method: 'POST',

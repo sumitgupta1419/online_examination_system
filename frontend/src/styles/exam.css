@@ -5,6 +5,27 @@
   padding: 20px;
 }
 
+
+
+
+.cheating-score {
+  font-size: 18px;
+  font-weight: bold;
+  margin-right: 20px;
+}
+
+.low-risk {
+  color: green;
+}
+
+.medium-risk {
+  color: orange;
+}
+
+.high-risk {
+  color: red;
+}
+
 /* Waiting Screen */
 .waiting-screen, .loading-screen, .exam-submitted {
   display: flex;

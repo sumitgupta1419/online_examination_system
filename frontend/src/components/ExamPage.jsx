@@ -12,6 +12,7 @@ const ExamPage = ({ studentId, studentName }) => {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [examSubmitted, setExamSubmitted] = useState(false);
+  const [cheatingScore, setCheatingScore] = useState(0);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -35,6 +36,23 @@ const ExamPage = ({ studentId, studentName }) => {
 
   return () => clearInterval(interval);
 }, [examStatus.is_active, examSubmitted]);
+
+
+useEffect(() => {
+  const interval = setInterval(async () => {
+    const res = await api.getCheatingScore(studentId);
+    setCheatingScore(res.score);
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [studentId]);
+
+
+
+
+
+
+
 
   useEffect(() => {
     if (examStatus.is_active && questions.length > 0 && timeRemaining > 0) {
@@ -191,25 +209,88 @@ const stopTimer = () => {
     setCameraActive(false);
   };
 
+
   const captureScreenshot = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+  if (!videoRef.current || !canvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    const context = canvas.getContext('2d');
+  const canvas = canvasRef.current;
+  const video = videoRef.current;
+  const context = canvas.getContext('2d');
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const imageData = canvas.toDataURL('image/png');
+  const imageData = canvas.toDataURL('image/png');
 
-    try {
-      await api.uploadScreenshot(studentId, imageData);
-    } catch (error) {
-      console.error('Error uploading screenshot:', error);
+  try {
+    const res = await api.analyzeFrame(studentId, imageData);
+
+    console.log("Score:", res.cheating_score);
+
+    // 🚨 ALERTS
+    if (res.cheating_score > 70) {
+      alert("🚨 Cheating detected!");
+    } else if (res.cheating_score > 30) {
+      console.log("⚠️ Suspicious activity");
     }
-  };
+
+  } catch (error) {
+    console.error('ML error:', error);
+  }
+};
+
+//   const captureScreenshot = async () => {
+//   if (!videoRef.current || !canvasRef.current) return;
+
+//   const canvas = canvasRef.current;
+//   const video = videoRef.current;
+//   const context = canvas.getContext('2d');
+
+//   canvas.width = video.videoWidth;
+//   canvas.height = video.videoHeight;
+//   context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+//   const imageData = canvas.toDataURL('image/png');
+
+//   try {
+//     // Send to ML API
+//     const result = await api.analyzeFrame(imageData);
+
+//     console.log("ML Result:", result);
+
+//     if (result.result.status === "no_face") {
+//       alert("⚠️ Face not visible!");
+//     }
+
+//     if (result.result.status === "multiple_faces") {
+//       alert("⚠️ Multiple faces detected!");
+//     }
+
+//   } catch (error) {
+//     console.error('ML error:', error);
+//   }
+// };
+
+  // const captureScreenshot = async () => {
+  //   if (!videoRef.current || !canvasRef.current) return;
+
+  //   const canvas = canvasRef.current;
+  //   const video = videoRef.current;
+  //   const context = canvas.getContext('2d');
+
+  //   canvas.width = video.videoWidth;
+  //   canvas.height = video.videoHeight;
+  //   context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  //   const imageData = canvas.toDataURL('image/png');
+
+  //   try {
+  //     await api.uploadScreenshot(studentId, imageData);
+  //   } catch (error) {
+  //     console.error('Error uploading screenshot:', error);
+  //   }
+  // };
 
   const handleAnswerSelect = async (answer) => {
     const currentQuestion = questions[currentQuestionIndex];
@@ -357,6 +438,27 @@ const stopTimer = () => {
           <h1>Online Examination</h1>
           <p className="student-info">Student: {studentName} ({studentId})</p>
         </div>
+
+          <div className="cheating-score">
+      <span>🎯 Score: </span>
+      <span
+        className={
+          cheatingScore > 70
+            ? 'high-risk'
+            : cheatingScore > 30
+            ? 'medium-risk'
+            : 'low-risk'
+        }
+      >
+        {cheatingScore}
+      </span>
+    </div>
+
+
+
+
+
+
         <div className="exam-timer">
           <span className="timer-icon">⏱️</span>
           <span className={`timer-value ${timeRemaining < 300 ? 'warning' : ''}`}>

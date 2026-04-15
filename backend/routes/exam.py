@@ -2,8 +2,84 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime,timedelta
 from models import Answer, StudentLogin
 from database import get_db
+from ml.face_detection import detect_faces
+
+
 
 router = APIRouter(prefix="/exam", tags=["exam"])
+
+
+from ml.face_detection import detect_faces
+
+# Store scores (temporary memory)
+cheating_scores = {}
+
+@router.post("/analyze-frame")
+async def analyze_frame(data: dict):
+    try:
+        student_id = data.get("student_id")
+        image = data.get("image")
+
+        result = detect_faces(image)
+
+        # Initialize score
+        if student_id not in cheating_scores:
+            cheating_scores[student_id] = 0
+
+        # 🚨 RULES
+        if result["status"] == "no_face":
+            cheating_scores[student_id] += 20
+
+        elif result["status"] == "multiple_faces":
+            cheating_scores[student_id] += 50
+
+        elif result["status"] == "ok":
+            cheating_scores[student_id] += 0
+
+        return {
+            "success": True,
+            "result": result,
+            "cheating_score": cheating_scores[student_id]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
+
+# @router.post("/analyze-frame")
+# async def analyze_frame(data: dict):
+#     try:
+#         image = data.get("image")
+
+#         result = detect_faces(image)
+
+#         return {
+#             "success": True,
+#             "result": result
+#         }
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+@router.get("/cheating-score/{student_id}")
+async def get_score(student_id: str):
+    score = cheating_scores.get(student_id, 0)
+
+    status = "Safe"
+    if score > 70:
+        status = "Cheating"
+    elif score > 30:
+        status = "Suspicious"
+
+    return {
+        "student_id": student_id,
+        "score": score,
+        "status": status
+    }
+
+
+
+
 
 @router.post("/student-login")
 async def student_login(credentials: StudentLogin):
@@ -45,6 +121,8 @@ async def student_login(credentials: StudentLogin):
 
 #     # from datetime import datetime, timedelta
 from datetime import datetime
+
+
 
 @router.get("/status")
 async def get_exam_status():
