@@ -4,6 +4,8 @@ from models import Answer, StudentLogin
 from database import get_db
 from ml.face_detection import detect_faces
 
+# from ml.eye_tracking import detect_eye_gaze
+
 
 
 router = APIRouter(prefix="/exam", tags=["exam"])
@@ -14,53 +16,86 @@ from ml.face_detection import detect_faces
 # Store scores (temporary memory)
 cheating_scores = {}
 
-@router.post("/analyze-frame")
-async def analyze_frame(data: dict):
-    try:
-        student_id = data.get("student_id")
-        image = data.get("image")
 
-        result = detect_faces(image)
 
-        # Initialize score
-        if student_id not in cheating_scores:
-            cheating_scores[student_id] = 0
-
-        # 🚨 RULES
-        if result["status"] == "no_face":
-            cheating_scores[student_id] += 20
-
-        elif result["status"] == "multiple_faces":
-            cheating_scores[student_id] += 50
-
-        elif result["status"] == "ok":
-            cheating_scores[student_id] += 0
-
-        return {
-            "success": True,
-            "result": result,
-            "cheating_score": cheating_scores[student_id]
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    
-
-# @router.post("/analyze-frame")
-# async def analyze_frame(data: dict):
+# @router.post("/analyze")
+# async def analyze_image(data: dict):
 #     try:
+#         student_id = data.get("student_id")
 #         image = data.get("image")
 
-#         result = detect_faces(image)
+#         if not student_id:
+#             raise HTTPException(status_code=400, detail="student_id required")
+
+#         # Initialize score
+#         if student_id not in cheating_scores:
+#             cheating_scores[student_id] = 0
+
+#         # 🔍 Face detection
+#         face_result = detect_faces(image)
+
+#         score_add = 0
+
+#         # 🚨 RULES
+#         if face_result["status"] == "no_face":
+#             score_add = 30
+
+#         elif face_result["status"] == "multiple_faces":
+#             score_add = 50
+
+#         # ✅ ADD SCORE (IMPORTANT)
+#         cheating_scores[student_id] += score_add
 
 #         return {
 #             "success": True,
-#             "result": result
+#             "face": face_result,
+#             "score_added": score_add,
+#             "total_score": cheating_scores[student_id]
 #         }
 
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
+@router.post("/analyze")
+async def analyze_image(data: dict):
+    student_id = data.get("student_id")
+    image = data.get("image")
+
+    # ❗ Validate input
+    if not student_id or not image:
+        raise HTTPException(status_code=400, detail="Missing student_id or image")
+
+    # Initialize score
+    if student_id not in cheating_scores:
+        cheating_scores[student_id] = 0
+
+    face_result = detect_faces(image)
+
+    cheating_score = 0
+
+    # Face logic
+    if face_result["status"] == "no_face":
+        cheating_score += 30
+    elif face_result["status"] == "multiple_faces":
+        cheating_score += 50
+
+    # ✅ FIX: Only add when cheating happens
+    if cheating_score > 0:
+        cheating_scores[student_id] += cheating_score
+    else:
+        # ✅ OPTIONAL: slowly reduce score if normal
+        cheating_scores[student_id] = max(0, cheating_scores[student_id] - 5)
+
+    # DEBUG
+    print("Face:", face_result)
+    print("Score:", cheating_scores[student_id])
+
+    return {
+        "face": face_result,
+        "cheating_score": cheating_scores[student_id]
+    }
+
+
+
 @router.get("/cheating-score/{student_id}")
 async def get_score(student_id: str):
     score = cheating_scores.get(student_id, 0)
