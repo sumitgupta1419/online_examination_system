@@ -13,7 +13,6 @@ colorama==0.4.6
 flatbuffers==25.12.19 
 h11==0.16.0 
 idna==3.11
-numpy==2.4.4
 opencv-python==4.13.0.92
 packaging==26.1
 pillow==12.2.0 
