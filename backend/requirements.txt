@@ -24,7 +24,8 @@ opencv-contrib-python==4.13.0.92
 opencv-python==4.13.0.92
 packaging==26.1
 pillow==12.2.0 
-PyAudio==0.2.14 pycparser==3.0 
+PyAudio==0.2.14  
+pycparser==3.0 
 pydantic_core==2.46.0 
 pyparsing==3.3.2 
 python-dateutil==2.9.0. 
