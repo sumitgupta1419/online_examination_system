@@ -14,7 +14,7 @@ app = FastAPI(title="Online Exam & Proctoring System")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=[ "https://online-examination-system-7h11-2yjg0d3s7.vercel.app"],  # In production, replace with specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
