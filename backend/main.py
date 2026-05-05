@@ -11,14 +11,23 @@ init_db()
 
 app = FastAPI(title="Online Exam & Proctoring System")
 
+
+origins = [
+    "https://online-examination-system-7h11.vercel.app",
+]
+
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[ "https://online-examination-system-7h11-2yjg0d3s7.vercel.app"],  # In production, replace with specific origins
+    allow_origins=[ "origins"],  # In production, replace with specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
 
 # Mount screenshots directory
 SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), "screenshots")
