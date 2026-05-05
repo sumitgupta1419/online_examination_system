@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://online-examination-system-17.onrender.com';
 
 export const api = {
   // Admin endpoints
